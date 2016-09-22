@@ -1,11 +1,11 @@
-FROM nvidia/cuda:7.5-cudnn4-devel
+FROM nvidia/cuda:8.0-cudnn5-devel
 
 MAINTAINER Sai Soundararaj <saip@outlook.com>
 
 ARG THEANO_VERSION=rel-0.8.2
-ARG TENSORFLOW_VERSION=0.8.0
+ARG TENSORFLOW_VERSION=0.10.0
 ARG TENSORFLOW_ARCH=gpu
-ARG KERAS_VERSION=1.0.3
+ARG KERAS_VERSION=1.1.0
 ARG LASAGNE_VERSION=v0.1
 ARG TORCH_VERSION=latest
 ARG CAFFE_VERSION=master
@@ -15,6 +15,11 @@ ARG CAFFE_VERSION=master
 #	echo -e "\n**********************\nCUDA Version\n**********************\n" && \
 #	nvcc -V && \
 #	echo -e "\n\nBuilding your Deep Learning Docker Image...\n"
+
+# update NVIDIA drivers
+RUN add-apt-repository ppa:graphics-drivers/ppa && \
+	apt-get update && \
+	apt-get install -y nvidia-graphics-drivers-370
 
 # Install some dependencies
 RUN apt-get update && apt-get install -y \
@@ -55,7 +60,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install pip
 RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
-	python get-pip.py && \
+	python3 get-pip.py && \
 	rm get-pip.py
 
 # Add SNI support to Python
@@ -67,15 +72,15 @@ RUN pip --no-cache-dir install \
 # Install useful Python packages using apt-get to avoid version incompatibilities with Tensorflow binary
 # especially numpy, scipy, skimage and sklearn (see https://github.com/tensorflow/tensorflow/issues/2034)
 RUN apt-get update && apt-get install -y \
-		python-numpy \
-		python-scipy \
-		python-nose \
-		python-h5py \
-		python-skimage \
-		python-matplotlib \
-		python-pandas \
-		python-sklearn \
-		python-sympy \
+		python3-numpy \
+		python3-scipy \
+		python3-nose \
+		python3-h5py \
+		python3-skimage \
+		python3-matplotlib \
+		python3-pandas \
+		python3-sklearn \
+		python3-sympy \
 		&& \
 	apt-get clean && \
 	apt-get autoremove && \
