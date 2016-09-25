@@ -1,4 +1,4 @@
-FROM nvidia/cuda:latest-ubuntu16.04
+FROM nvidia/cuda:8.0-cudnn5-devel-ubuntu16.04
 
 MAINTAINER Sai Soundararaj <saip@outlook.com>
 
@@ -20,9 +20,9 @@ ARG CAFFE_VERSION=master
 RUN apt-get update && apt-get install -y software-properties-common
 
 # update NVIDIA drivers
-RUN add-apt-repository ppa:graphics-drivers/ppa && \
-	apt-get update && \
-	DEBIAN_FRONTEND=noninteractive apt-get install -yq nvidia-370
+#RUN add-apt-repository ppa:graphics-drivers/ppa && \
+#	apt-get update && \
+#	DEBIAN_FRONTEND=noninteractive apt-get install -yq nvidia-370
 
 # Install some dependencies
 RUN apt-get update && apt-get install -y \
@@ -40,7 +40,6 @@ RUN apt-get update && apt-get install -y \
 		liblcms2-dev \
 		libopenblas-dev \
 		liblapack-dev \
-#		libopenjpeg2 \
 		libpng12-dev \
 		libssl-dev \
 		libtiff5-dev \
@@ -96,22 +95,21 @@ RUN \
 # pip --no-cache-dir install --upgrade ipython && \
 	pip --no-cache-dir install \
 		Cython \
-#		ipykernel \
 		jupyter \
 		path.py \
-#		Pillow \
 		pygments \
 		six \
 		sphinx \
 		wheel \
 		zmq 
-#		&& \
-#	python -m ipykernel.kernelspec
 
 
 # Install TensorFlow
 RUN pip --no-cache-dir install \
 	https://storage.googleapis.com/tensorflow/linux/${TENSORFLOW_ARCH}/tensorflow-${TENSORFLOW_VERSION}-cp35-cp35m-linux_x86_64.whl
+
+# Lie to tensorflow about cuda 8.0
+RUN ln -s libcudart.so /usr/local/cuda-8.0/targets/x86_64-linux/lib/libcudart.so.7.5
 
 
 # Install dependencies for Caffe
