@@ -104,7 +104,7 @@ RUN \
 		zmq
 
 # Install things needed to build tensorflow
-RUN add-apt-repository ppa:webupd8team/java && apt-get update && apt-get install oracle-java8-installer swig -y
+RUN add-apt-repository ppa:webupd8team/java && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install oracle-java8-installer swig -yq
 
 RUN echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" > /etc/apt/sources.list.d/bazel.list \
     && curl https://storage.googleapis.com/bazel-apt/doc/apt-key.pub.gpg | apt-key add -
