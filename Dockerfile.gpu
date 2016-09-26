@@ -3,8 +3,8 @@ FROM nvidia/cuda:8.0-cudnn5-devel-ubuntu16.04
 MAINTAINER Sai Soundararaj <saip@outlook.com>
 
 ARG THEANO_VERSION=rel-0.8.2
-ARG TENSORFLOW_VERSION=0.10.0
-ARG TENSORFLOW_ARCH=gpu
+ARG TENSORFLOW_VERSION=v0.10.0
+ARG TENSORFLOW_ARCH=cuda
 ARG KERAS_VERSION=1.1.0
 ARG LASAGNE_VERSION=master
 ARG TORCH_VERSION=latest
@@ -129,11 +129,11 @@ RUN echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8
 
 RUN apt-get update && apt-get install bazel -y
 
-RUN git clone https://github.com/tensorflow/tensorflow && cd tensorflow && \
+RUN git clone https://github.com/tensorflow/tensorflow && cd tensorflow && git checkout tags/${TENSORFLOW_VERSION} && \
     echo "/usr/bin/python3\nN\nN\n/usr/local/lib/python3.5/dist-packages\ny\n\n\n\n6.1\n" | ./configure && \
-    bazel build -c opt --config=cuda //tensorflow/tools/pip_package:build_pip_package && \
+    bazel build -c opt --config=${TENSORFLOW_ARCH} //tensorflow/tools/pip_package:build_pip_package && \
     bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg && \
-    pip install /tmp/tensorflow_pkg/tensorflow-0.10.0-py35-none-any.whl
+    pip install /tmp/tensorflow_pkg/tensorflow-0.10.0-py3-none-any.whl
 
 # Install TensorFlow
 #RUN pip --no-cache-dir install \
