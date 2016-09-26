@@ -101,16 +101,25 @@ RUN \
 		six \
 		sphinx \
 		wheel \
-		zmq 
+		zmq
 
+# Install things needed to build tensorflow
+RUN add-apt-repository ppa:webupd8team/java && apt-get update && apt-get install oracle-java8-installer swig -y
+
+RUN echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" > /etc/apt/sources.list.d/bazel.list \
+    && curl https://storage.googleapis.com/bazel-apt/doc/apt-key.pub.gpg | apt-key add -
+
+RUN apt-get update && sudo apt-get install bazel
+
+RUN git clone https://github.com/tensorflow/tensorflow && cd tensorflow && \
+    echo "/usr/bin/python3.5\nN\nN\ny\n\n\n\n6.1\n" | tensorflow/configure && \
+    bazel build -c opt --config=cuda //tensorflow/tools/pip_package:build_pip_package && \
+    bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg && \
+    pip install /tmp/tensorflow_pkg/tensorflow-0.10.0-py35-none-any.whl
 
 # Install TensorFlow
-RUN pip --no-cache-dir install \
-	https://storage.googleapis.com/tensorflow/linux/${TENSORFLOW_ARCH}/tensorflow-${TENSORFLOW_VERSION}-cp35-cp35m-linux_x86_64.whl
-
-# Lie to tensorflow about cuda 8.0
-RUN ln -s libcudart.so /usr/local/cuda-8.0/targets/x86_64-linux/lib/libcudart.so.7.5
-
+#RUN pip --no-cache-dir install \
+#	https://storage.googleapis.com/tensorflow/linux/${TENSORFLOW_ARCH}/tensorflow-${TENSORFLOW_VERSION}-cp35-cp35m-linux_x86_64.whl
 
 # Install dependencies for Caffe
 RUN apt-get update && apt-get install -y \
