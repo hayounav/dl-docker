@@ -3,7 +3,7 @@ FROM nvidia/cuda:8.0-cudnn5-devel-ubuntu16.04
 MAINTAINER Sai Soundararaj <saip@outlook.com>
 
 ARG THEANO_VERSION=rel-0.8.2
-ARG TENSORFLOW_VERSION=v0.10.0
+ARG TENSORFLOW_VERSION=r0.10
 ARG TENSORFLOW_ARCH=cuda
 ARG KERAS_VERSION=1.1.0
 ARG LASAGNE_VERSION=master
@@ -92,7 +92,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install other useful Python packages using pip
 RUN \
-# pip --no-cache-dir install --upgrade ipython && \
+# pip --no-cache-dir install --upgrade ipython pythone-dateutil && \
 	pip --no-cache-dir install \
 		Cython \
 		jupyter \
@@ -129,15 +129,25 @@ RUN echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8
 
 RUN apt-get update && apt-get install bazel -y
 
-RUN git clone https://github.com/tensorflow/tensorflow && cd tensorflow && git checkout tags/${TENSORFLOW_VERSION} && \
-    echo "/usr/bin/python3\nN\nN\n/usr/local/lib/python3.5/dist-packages\ny\n\n\n\n6.1\n" | ./configure && \
-    bazel build -c opt --config=${TENSORFLOW_ARCH} //tensorflow/tools/pip_package:build_pip_package && \
-    bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg && \
-    pip install /tmp/tensorflow_pkg/tensorflow-0.10.0-py3-none-any.whl
+# Download and build TensorFlow.
+RUN git clone --recurse-submodules https://github.com/tensorflow/tensorflow.git && \
+    cd tensorflow && \
+    git checkout ${TENSORFLOW_VERSION} && \
+    git submodule update --init
+WORKDIR /tensorflow
 
-# Install TensorFlow
-#RUN pip --no-cache-dir install \
-#	https://storage.googleapis.com/tensorflow/linux/${TENSORFLOW_ARCH}/tensorflow-${TENSORFLOW_VERSION}-cp35-cp35m-linux_x86_64.whl
+# Configure the TF build for our CUDA configuration.
+ENV PYTHON_BIN_PATH /usr/bin/python3
+ENV PYTHONPATH /usr/local/lib/python3.5/dist-packages:
+ENV CUDA_TOOLKIT_PATH /usr/local/cuda
+ENV CUDNN_INSTALL_PATH /usr/local/cuda
+ENV TF_NEED_CUDA 1
+ENV TF_CUDA_COMPUTE_CAPABILITIES 6.1
+
+RUN ./configure && \
+    bazel build -c opt --config=cuda tensorflow/tools/pip_package:build_pip_package && \
+    bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/pip && \
+    pip install --upgrade /tmp/pip/tensorflow-*.whl
 
 # Install dependencies for Caffe
 RUN apt-get update && apt-get install -y \
