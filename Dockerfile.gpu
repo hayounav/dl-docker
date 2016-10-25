@@ -3,26 +3,15 @@ FROM nvidia/cuda:8.0-cudnn5-devel-ubuntu16.04
 MAINTAINER Sai Soundararaj <saip@outlook.com>
 
 ARG THEANO_VERSION=rel-0.8.2
-ARG TENSORFLOW_VERSION=r0.10
-ARG TENSORFLOW_ARCH=cuda
+ARG TENSORFLOW_VERSION=0.11.0rc1
+ARG TENSORFLOW_ARCH=gpu
 ARG KERAS_VERSION=1.1.0
 ARG LASAGNE_VERSION=master
 ARG TORCH_VERSION=latest
 ARG CAFFE_VERSION=master
 
-#RUN echo -e "\n**********************\nNVIDIA Driver Version\n**********************\n" && \
-#	cat /proc/driver/nvidia/version && \
-#	echo -e "\n**********************\nCUDA Version\n**********************\n" && \
-#	nvcc -V && \
-#	echo -e "\n\nBuilding your Deep Learning Docker Image...\n"
-
 # install add-apt-repository command
 RUN apt-get update && apt-get install -y software-properties-common
-
-# update NVIDIA drivers
-#RUN add-apt-repository ppa:graphics-drivers/ppa && \
-#	apt-get update && \
-#	DEBIAN_FRONTEND=noninteractive apt-get install -yq nvidia-370
 
 # Install some dependencies
 RUN apt-get update && apt-get install -y \
@@ -121,33 +110,8 @@ RUN \
     apt-get clean  && \
     rm -rf /var/lib/apt/lists/*
 
-# Install things needed to build tensorflow
-RUN add-apt-repository ppa:webupd8team/java && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --force-yes oracle-java8-installer swig
-
-RUN echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" > /etc/apt/sources.list.d/bazel.list \
-    && curl https://storage.googleapis.com/bazel-apt/doc/apt-key.pub.gpg | apt-key add -
-
-RUN apt-get update && apt-get install bazel -y
-
-# Download and build TensorFlow.
-RUN git clone --recurse-submodules https://github.com/tensorflow/tensorflow.git && \
-    cd tensorflow && \
-    git checkout ${TENSORFLOW_VERSION} && \
-    git submodule update --init
-WORKDIR /tensorflow
-
-# Configure the TF build for our CUDA configuration.
-ENV PYTHON_BIN_PATH /usr/bin/python3
-ENV PYTHONPATH /usr/local/lib/python3.5/dist-packages:
-ENV CUDA_TOOLKIT_PATH /usr/local/cuda
-ENV CUDNN_INSTALL_PATH /usr/local/cuda
-ENV TF_NEED_CUDA 1
-ENV TF_CUDA_COMPUTE_CAPABILITIES 6.1
-
-RUN ./configure && \
-    bazel build -c opt --config=cuda tensorflow/tools/pip_package:build_pip_package && \
-    bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/pip && \
-    pip install --upgrade /tmp/pip/tensorflow-*.whl
+# Install tensorflow with cuda8 support
+RUN pip install --upgrade https://storage.googleapis.com/tensorflow/linux/${TENSORFLOW_ARCH}/tensorflow-${TENSORFLOW_VERSION}-cp35-cp35m-linux_x86_64.whl
 
 # Install dependencies for Caffe
 RUN apt-get update && apt-get install -y \
